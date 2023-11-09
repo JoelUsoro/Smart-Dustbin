@@ -1,53 +1,45 @@
 #include <Arduino.h>
 
-#include <Servo.h>   //servo library
-Servo servo;     
-int trigPin = 5;    
-int echoPin = 6;   
-int servoPin = 7;
-int led= 10;
-long duration, dist, average;   
-long aver[3];   //array for average
+#include <Servo.h>
+Servo servo;
 
+const int trigPin = 9;
+const int echoPin = 8;
+const int servoPin = 2;
+const int maxDistance = 20;
+int onState = 0;
 
-void setup() {       
-    Serial.begin(9600);
-    servo.attach(servoPin);  
-    pinMode(trigPin, OUTPUT);  
-    pinMode(echoPin, INPUT);  
-    servo.write(0);         //close cap on power on
-    delay(100);
-    servo.detach(); 
-} 
-
-void measure() {  
- digitalWrite(10,HIGH);
-digitalWrite(trigPin, LOW);
-delayMicroseconds(5);
-digitalWrite(trigPin, HIGH);
-delayMicroseconds(15);
-digitalWrite(trigPin, LOW);
-pinMode(echoPin, INPUT);
-duration = pulseIn(echoPin, HIGH);
-dist = (duration/2) / 29.1;    //obtain distance
+void setup() {
+  servo.attach(servoPin);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  Serial.begin(9600);
 }
-void loop() { 
-  for (int i=0;i<=2;i++) {   //average distance
-    measure();               
-   aver[i]=dist;            
-    delay(10);              //delay between measurements
+
+void loop() {
+  long duration, distance;
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH);
+
+  distance = duration * 0.034 / 2;
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  if (distance <= 80 && onState == 0) {
+    servo.write(180);
+    onState = 1;
+//    delay(500);
+  } else if (distance > 100 && onState == 1) {
+    servo.write(0);
+    onState = 0;
+    
   }
- dist=(aver[0]+aver[1]+aver[2])/3;    
-
-if ( dist<50 ) {
-//Change distance as per your need
- servo.attach(servoPin);
-  delay(1);
- servo.write(0);  
- delay(3000);       
- servo.write(150);    
- delay(1000);
- servo.detach();      
-}
-Serial.print(dist);
+  delay(500);
 }
